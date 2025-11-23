@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <title>Open Product Page</title>
+    <meta charset="utf-8" />
+    <script src="sdpi-components.js"></script>
+</head>
+
+<body>
+    <!--
+        Learn more about property inspector components at https://sdpi-components.dev/docs/components
+    -->
+    <sdpi-item label="IP">
+        <sdpi-textfield setting="ip" placeholder="Pterodactyl ip/url" required>
+        </sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="Protocol">
+        <sdpi-radio setting="protocol" columns="2">
+            <option value="http">HTTP</option>
+            <option value="https">HTTPS</option>
+        </sdpi-radio>
+    </sdpi-item>
+    <sdpi-item label="API Key">
+        <sdpi-textfield setting="apiKey" placeholder="ptlc_xxxxxxxxxxxxxxxxxxxxxx" required>
+        </sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="Server">
+        <sdpi-select setting="serverID" datasource="getServers" loading="Fetching products..."
+            placeholder="Please select" show-refresh="true">
+        </sdpi-select>
+    </sdpi-item>
+    <sdpi-item label="Action Type">
+        <sdpi-select setting="action" placeholder="Please choose an action">
+            <option value="stop">Stop</option>
+            <option value="start">Start</option>
+            <option value="restart">Restart</option>
+            <option value="kill">Kill</option>
+        </sdpi-select>
+    </sdpi-item>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+{
+  "Name": "Pterodactyl Remote",
+  "Version": "0.1.0.0",
+  "Author": "PhiMai",
+  "Actions": [
+    {
+      "Name": "Perform Power Action",
+      "UUID": "net.phimai.pterodactyl.perform-power-action",
+      "Icon": "imgs/actions/perform-power-action/key-stop",
+      "Tooltip": "Example of populating a dropdown from the plugin.",
+      "PropertyInspectorPath": "ui/open-product-page.html",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/open-product-page/key",
+          "TitleAlignment": "middle"
+        }
+      ]
+    }
+  ],
+  "Category": "Pterodactyl Remote",
+  "CategoryIcon": "imgs/plugin/category-icon",
+  "CodePath": "bin/plugin.js",
+  "Description": "Demonstrate populating components with data sources from the plugin",
+  "Icon": "imgs/plugin/marketplace",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "12"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "enabled"
+  },
+  "UUID": "net.phimai.pterodactyl"
+}
