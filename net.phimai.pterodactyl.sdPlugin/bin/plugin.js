@@ -1,6 +1,6 @@
 import require$$0$3, { EventEmitter as EventEmitter$1 } from 'events';
-import require$$1$1 from 'https';
-import require$$1$2 from 'http';
+import https from 'https';
+import require$$1$1 from 'http';
 import require$$3 from 'net';
 import require$$4 from 'tls';
 import require$$1 from 'crypto';
@@ -12,7 +12,7 @@ import path, { join } from 'node:path';
 import { cwd } from 'node:process';
 import fs, { existsSync, readFileSync } from 'node:fs';
 import util from 'util';
-import require$$1$3 from 'path';
+import require$$1$2 from 'path';
 import fs$1 from 'fs';
 import http2 from 'http2';
 import require$$4$1 from 'assert';
@@ -2882,8 +2882,8 @@ function requireWebsocket () {
 	hasRequiredWebsocket = 1;
 
 	const EventEmitter = require$$0$3;
-	const https = require$$1$1;
-	const http = require$$1$2;
+	const https$1 = https;
+	const http = require$$1$1;
 	const net = require$$3;
 	const tls = require$$4;
 	const { randomBytes, createHash } = require$$1;
@@ -3607,7 +3607,7 @@ function requireWebsocket () {
 
 	  const defaultPort = isSecure ? 443 : 80;
 	  const key = randomBytes(16).toString('base64');
-	  const request = isSecure ? https.request : http.request;
+	  const request = isSecure ? https$1.request : http.request;
 	  const protocolSet = new Set();
 	  let perMessageDeflate;
 
@@ -4527,7 +4527,7 @@ function requireWebsocketServer () {
 	hasRequiredWebsocketServer = 1;
 
 	const EventEmitter = require$$0$3;
-	const http = require$$1$2;
+	const http = require$$1$1;
 	const { Duplex } = stream$1;
 	const { createHash } = require$$1;
 
@@ -4780,9 +4780,11 @@ function requireWebsocketServer () {
 	      return;
 	    }
 
-	    if (version !== 8 && version !== 13) {
+	    if (version !== 13 && version !== 8) {
 	      const message = 'Missing or invalid Sec-WebSocket-Version header';
-	      abortHandshakeOrEmitwsClientError(this, req, socket, 400, message);
+	      abortHandshakeOrEmitwsClientError(this, req, socket, 400, message, {
+	        'Sec-WebSocket-Version': '13, 8'
+	      });
 	      return;
 	    }
 
@@ -5050,16 +5052,24 @@ function requireWebsocketServer () {
 	 * @param {Duplex} socket The socket of the upgrade request
 	 * @param {Number} code The HTTP response status code
 	 * @param {String} message The HTTP response body
+	 * @param {Object} [headers] The HTTP response headers
 	 * @private
 	 */
-	function abortHandshakeOrEmitwsClientError(server, req, socket, code, message) {
+	function abortHandshakeOrEmitwsClientError(
+	  server,
+	  req,
+	  socket,
+	  code,
+	  message,
+	  headers
+	) {
 	  if (server.listenerCount('wsClientError')) {
 	    const err = new Error(message);
 	    Error.captureStackTrace(err, abortHandshakeOrEmitwsClientError);
 
 	    server.emit('wsClientError', err, socket, req);
 	  } else {
-	    abortHandshake(socket, code, message);
+	    abortHandshake(socket, code, message, headers);
 	  }
 	}
 	return websocketServer;
@@ -8218,6 +8228,111 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     var e = new Error(message);
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
+
+function getActionIcon(action) {
+    let path = `imgs/actions/perform-power-action/key-${action}.svg`;
+    const svgContent = fs$1.readFileSync(path, "utf-8");
+    return svgContent;
+}
+function getSVGFromFile(path) {
+    return fs$1.readFileSync(path, "utf-8");
+}
+
+let PerformPowerAction = (() => {
+    let _classDecorators = [action({ UUID: "net.phimai.pterodactyl.perform-power-action" })];
+    let _classDescriptor;
+    let _classExtraInitializers = [];
+    let _classThis;
+    let _classSuper = SingletonAction;
+    (class extends _classSuper {
+        static { _classThis = this; }
+        static {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        }
+        //@ts-ignore
+        async onKeyDown(ev) {
+            // streamDeck.logger.info("settings: " + JSON.stringify(await streamDeck.settings.getGlobalSettings()));
+            let action = ev.payload.settings.action;
+            await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(getSVGFromFile("imgs/actions/perform-power-action/spinner.svg"))}`);
+            if (await apiManager.performAction()) {
+                // ev.action.showOk();
+                await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(getSVGFromFile(`imgs/actions/perform-power-action/key-${action}.svg`))}`);
+            }
+            else {
+                ev.action.showAlert();
+            }
+        }
+        async onSendToPlugin(ev) {
+            if (ev.payload instanceof Object && "event" in ev.payload && ev.payload.event === "getServers") {
+                streamDeck.logger.info(streamDeck.ui.current);
+                streamDeck.ui.current?.sendToPropertyInspector({
+                    event: "getServers",
+                    items: await apiManager.getAvailableServers(),
+                });
+            }
+        }
+        //@ts-ignore
+        async onDidReceiveSettings(ev) {
+            streamDeck.logger.info(`Settings updated: ${JSON.stringify(ev.payload.settings)}`);
+            streamDeck.settings.setGlobalSettings(ev.payload.settings);
+            let svgData = getActionIcon(ev.payload.settings.action);
+            await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(svgData)}`);
+        }
+        //@ts-ignore
+        async onWillAppear(ev) {
+            let action = ev.payload.settings.action;
+            let serverID = ev.payload.settings.serverID;
+            let status = await apiManager.getServerStatus(serverID);
+            streamDeck.logger.info(`Server status for ${serverID}: ${status}`);
+            //@ts-ignore
+            // await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(instertStatusIndicator(getSVGFromFile(`imgs/actions/perform-power-action/key-${action}.svg`), status))}`);
+            await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(getSVGFromFile(`imgs/actions/perform-power-action/key-${action}.svg`))}`);
+            await ev.action.setTitle(await apiManager.getServerNameFromID(serverID));
+        }
+    });
+    return _classThis;
+})();
+
+let ShowOnlinePlayers = (() => {
+    let _classDecorators = [action({ UUID: "net.phimai.pterodactyl.show-online-players" })];
+    let _classDescriptor;
+    let _classExtraInitializers = [];
+    let _classThis;
+    let _classSuper = SingletonAction;
+    (class extends _classSuper {
+        static { _classThis = this; }
+        static {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        }
+        async onKeyDown(ev) {
+            streamDeck.logger.info("ShowOnlinePlayers Key Down");
+            // let players: string[] = await apiManager.runCommand();
+            // streamDeck.logger.info(`Online players: ${players.join(", ")}`);
+            // externalApiManager.downloadPlayerHeads(players, 144, `D:/Daten/Programmieren/streamdeck-plugins/pterodactyl-controller/net.phimai.pterodactyl.sdPlugin/data/heads`);
+            // const dataUrl = pngToBase64DataUrl(`D:/Daten/Programmieren/streamdeck-plugins/pterodactyl-controller/net.phimai.pterodactyl.sdPlugin/data/heads` + `/PhiMai.png`);
+            // await ev.action.setImage(dataUrl ?? "");
+        }
+        async onWillAppear(ev) {
+            ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font
+    Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License -
+    https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+    <g transform="translate(320, 320) scale(0.65) translate(-320, -320)">
+        <path fill="#ffffff"
+            d="M320 80C377.4 80 424 126.6 424 184C424 241.4 377.4 288 320 288C262.6 288 216 241.4 216 184C216 126.6 262.6 80 320 80zM96 152C135.8 152 168 184.2 168 224C168 263.8 135.8 296 96 296C56.2 296 24 263.8 24 224C24 184.2 56.2 152 96 152zM0 480C0 409.3 57.3 352 128 352C140.8 352 153.2 353.9 164.9 357.4C132 394.2 112 442.8 112 496L112 512C112 523.4 114.4 534.2 118.7 544L32 544C14.3 544 0 529.7 0 512L0 480zM521.3 544C525.6 534.2 528 523.4 528 512L528 496C528 442.8 508 394.2 475.1 357.4C486.8 353.9 499.2 352 512 352C582.7 352 640 409.3 640 480L640 512C640 529.7 625.7 544 608 544L521.3 544zM472 224C472 184.2 504.2 152 544 152C583.8 152 616 184.2 616 224C616 263.8 583.8 296 544 296C504.2 296 472 263.8 472 224zM160 496C160 407.6 231.6 336 320 336C408.4 336 480 407.6 480 496L480 512C480 529.7 465.7 544 448 544L192 544C174.3 544 160 529.7 160 512L160 496z" />
+    </g>
+</svg>`)}`);
+        }
+    });
+    return _classThis;
+})();
 
 /**
  * Create a bound version of a function with a specified `this` context
@@ -20195,7 +20310,7 @@ function requireMimeTypes () {
 		 */
 
 		var db = requireMimeDb();
-		var extname = require$$1$3.extname;
+		var extname = require$$1$2.extname;
 
 		/**
 		 * Module variables.
@@ -21936,9 +22051,9 @@ function requireForm_data () {
 
 	var CombinedStream = requireCombined_stream();
 	var util$1 = util;
-	var path = require$$1$3;
-	var http = require$$1$2;
-	var https = require$$1$1;
+	var path = require$$1$2;
+	var http = require$$1$1;
+	var https$1 = https;
 	var parseUrl = require$$0$2.parse;
 	var fs = fs$1;
 	var Stream = stream$1.Stream;
@@ -22373,7 +22488,7 @@ function requireForm_data () {
 
 	  // https if specified, fallback to http in any other case
 	  if (options.protocol === 'https:') {
-	    request = https.request(options);
+	    request = https$1.request(options);
 	  } else {
 	    request = http.request(options);
 	  }
@@ -23813,8 +23928,8 @@ function requireFollowRedirects () {
 	hasRequiredFollowRedirects = 1;
 	var url = require$$0$2;
 	var URL = url.URL;
-	var http = require$$1$2;
-	var https = require$$1$1;
+	var http = require$$1$1;
+	var https$1 = https;
 	var Writable = stream$1.Writable;
 	var assert = require$$4$1;
 	var debug = requireDebug();
@@ -24495,7 +24610,7 @@ function requireFollowRedirects () {
 	}
 
 	// Exports
-	followRedirects$1.exports = wrap({ http: http, https: https });
+	followRedirects$1.exports = wrap({ http: http, https: https$1 });
 	followRedirects$1.exports.wrap = wrap;
 	return followRedirects$1.exports;
 }
@@ -25666,7 +25781,7 @@ var httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
       if (config.transport) {
         transport = config.transport;
       } else if (config.maxRedirects === 0) {
-        transport = isHttpsRequest ? require$$1$1 : require$$1$2;
+        transport = isHttpsRequest ? https : require$$1$1;
       } else {
         if (config.maxRedirects) {
           options.maxRedirects = config.maxRedirects;
@@ -27586,7 +27701,7 @@ const {
   mergeConfig
 } = axios;
 
-class ApiManager {
+class PterodactylApiManager {
     async getAvailableServers() {
         const obj = await streamDeck.settings.getGlobalSettings();
         streamDeck.logger.info("Global settings: " + JSON.stringify(obj));
@@ -27626,7 +27741,7 @@ class ApiManager {
             }
         }
         catch (error) {
-            console.error("Error fetching server name:", error);
+            streamDeck.logger.error("Error fetching server name:", error);
             return "null";
         }
     }
@@ -27645,7 +27760,7 @@ class ApiManager {
             return response.status === 204;
         }
         catch (error) {
-            console.error("Error restarting server:", error);
+            streamDeck.logger.error("Error restarting server:", error);
             return false;
         }
     }
@@ -27669,81 +27784,184 @@ class ApiManager {
             return "error";
         }
     }
-}
-
-function getActionIcon(action) {
-    let path = `imgs/actions/perform-power-action/key-${action}.svg`;
-    const svgContent = fs$1.readFileSync(path, "utf-8");
-    return svgContent;
-}
-function getSVGFromFile(path) {
-    return fs$1.readFileSync(path, "utf-8");
-}
-
-let PerformPowerAction = (() => {
-    let _classDecorators = [action({ UUID: "net.phimai.pterodactyl.perform-power-action" })];
-    let _classDescriptor;
-    let _classExtraInitializers = [];
-    let _classThis;
-    let _classSuper = SingletonAction;
-    (class extends _classSuper {
-        static { _classThis = this; }
-        static {
-            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
-            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-            _classThis = _classDescriptor.value;
-            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
-            __runInitializers(_classThis, _classExtraInitializers);
-        }
-        apiManager = new ApiManager();
-        //@ts-ignore
-        async onKeyDown(ev) {
-            // streamDeck.logger.info("settings: " + JSON.stringify(await streamDeck.settings.getGlobalSettings()));
-            let action = ev.payload.settings.action;
-            await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(getSVGFromFile("imgs/actions/perform-power-action/spinner.svg"))}`);
-            if (await this.apiManager.performAction()) {
-                // ev.action.showOk();
-                await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(getSVGFromFile(`imgs/actions/perform-power-action/key-${action}.svg`))}`);
-            }
-            else {
-                ev.action.showAlert();
-            }
-        }
-        async onSendToPlugin(ev) {
-            if (ev.payload instanceof Object && "event" in ev.payload && ev.payload.event === "getServers") {
-                streamDeck.logger.info(streamDeck.ui.current);
-                streamDeck.ui.current?.sendToPropertyInspector({
-                    event: "getServers",
-                    items: await this.apiManager.getAvailableServers(),
+    // ##############################
+    // async runCommand() {
+    //     const PANEL_URL = "http://192.168.178.12"; // replace with your panel URL
+    //     const API_KEY = "ptlc_X8ZbKcAVkert4obg6PDsLHNbFRPF1SrEQDIGiZPes05";        // replace with your API key
+    //     const SERVER_ID = "81f81ada";               // replace with your server ID
+    //     const COMMAND = "list"; // replace with your command
+    //     streamDeck.logger.info("Running command via WebSocket...");
+    //     try {
+    //         const response = await axios.get(`${PANEL_URL}/api/client/servers/${SERVER_ID}/websocket`, {
+    //             headers: {
+    //                 "Authorization": `Bearer ${API_KEY}`,
+    //                 "Accept": "Application/vnd.pterodactyl.v1+json",
+    //                 "Content-Type": "application/json",
+    //             },
+    //         });
+    //         const { token, socket } = response.data.data;
+    //         streamDeck.logger.info("WebSocket token and URL obtained.", { token, socket });
+    //         const ws = new WebSocket(socket, {
+    //             headers: { "Origin": PANEL_URL },
+    //         });
+    //         streamDeck.logger.info("WebSocket connection initiated.");
+    //         ws.on("open", () => {
+    //             ws.send(JSON.stringify({ event: "auth", args: [token] }));
+    //             streamDeck.logger.info("WebSocket authentication sent.");
+    //         });
+    //         ws.on("message", (data: WebSocket.Data) => {
+    //             // streamDeck.logger.info("WebSocket data received:", data);
+    //             const messageString = data.toString();
+    //             // streamDeck.logger.info("WebSocket message received:", messageString);
+    //             let message;
+    //             try {
+    //                 message = JSON.parse(messageString);
+    //                 // Auth successful -> send command
+    //                 if (message.event === "auth success") {
+    //                     ws.send(JSON.stringify({ event: "send command", args: [COMMAND] }));
+    //                 }
+    //                 let output = "";
+    //                 // Output from the command
+    //                 if (message.event === "console output") {
+    //                     const output = message.args[0];
+    //                     if (output && output.includes("There are") && output.includes("players online")) {
+    //                         const namesPart = output.split(":").pop()?.trim();
+    //                         const players = namesPart && namesPart.length > 0
+    //                             //@ts-ignore
+    //                             ? namesPart.split(",").map((name) => name.trim())
+    //                             : [];
+    //                         ws.close();
+    //                         streamDeck.logger.warn(players); // return the array
+    //                     }
+    //                 }
+    //                 // // Check for the specific command output pattern
+    //                 // if (output.includes("There are") && output.includes("players online")) {
+    //                 //     ws.close(); // close WS after receiving expected output
+    //                 // }
+    //             } catch (err) {
+    //                 streamDeck.logger.error("Failed to parse message:", data, err);
+    //             }
+    //         });
+    //         ws.on("close", () => streamDeck.logger.info("WebSocket closed."));
+    //         ws.on("error", (err) => streamDeck.logger.info("WebSocket error:", err));
+    //     } catch (err) {
+    //         streamDeck.logger.error("Error:", err);
+    //     }
+    // }
+    async runCommand() {
+        const PANEL_URL = "http://192.168.178.12"; // your panel URL
+        const API_KEY = "ptlc_X8ZbKcAVkert4obg6PDsLHNbFRPF1SrEQDIGiZPes05"; // your API key
+        const SERVER_ID = "81f81ada"; // your server ID
+        const COMMAND = "list"; // the command
+        streamDeck.logger.info("Running command via WebSocket...");
+        return new Promise(async (resolve, reject) => {
+            try {
+                const response = await axios.get(`${PANEL_URL}/api/client/servers/${SERVER_ID}/websocket`, {
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Accept": "Application/vnd.pterodactyl.v1+json",
+                        "Content-Type": "application/json",
+                    },
+                });
+                const { token, socket } = response.data.data;
+                streamDeck.logger.info("WebSocket token and URL obtained.", { token, socket });
+                const ws = new WebSocket(socket, { headers: { "Origin": PANEL_URL } });
+                streamDeck.logger.info("WebSocket connection initiated.");
+                ws.on("open", () => {
+                    ws.send(JSON.stringify({ event: "auth", args: [token] }));
+                    streamDeck.logger.info("WebSocket authentication sent.");
+                });
+                ws.on("message", (data) => {
+                    const messageString = data.toString();
+                    let message;
+                    try {
+                        message = JSON.parse(messageString);
+                        // Auth successful -> send command
+                        if (message.event === "auth success") {
+                            streamDeck.logger.info("Authentication successful. Sending command...");
+                            ws.send(JSON.stringify({ event: "send command", args: [COMMAND] }));
+                        }
+                        // Output from the command
+                        if (message.event === "console output") {
+                            const output = message.args[0];
+                            if (output && output.includes("There are") && output.includes("players online")) {
+                                const namesPart = output.split(":").pop()?.trim();
+                                const players = namesPart && namesPart.length > 0
+                                    //@ts-ignore
+                                    ? namesPart.split(",").map(name => name.trim())
+                                    : [];
+                                ws.close();
+                                streamDeck.logger.warn(players); // log the array
+                                resolve(players); // resolve the promise
+                            }
+                        }
+                    }
+                    catch (err) {
+                        streamDeck.logger.error("Failed to parse message:", data, err);
+                        reject(err);
+                    }
+                });
+                ws.on("close", () => streamDeck.logger.info("WebSocket closed."));
+                ws.on("error", (err) => {
+                    streamDeck.logger.error("WebSocket error:", err);
+                    reject(err);
                 });
             }
+            catch (err) {
+                streamDeck.logger.error("Error:", err);
+                reject(err);
+            }
+        });
+    }
+}
+class ExternalApiManager {
+    downloadPlayerHeads(players, size = 144, folder) {
+        if (!Array.isArray(players) || players.length === 0) {
+            streamDeck.logger.warn("No players to download.");
+            return;
         }
-        //@ts-ignore
-        async onDidReceiveSettings(ev) {
-            streamDeck.logger.info(`Settings updated: ${JSON.stringify(ev.payload.settings)}`);
-            streamDeck.settings.setGlobalSettings(ev.payload.settings);
-            let svgData = getActionIcon(ev.payload.settings.action);
-            await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(svgData)}`);
+        // Ensure folder exists
+        if (!fs$1.existsSync(folder)) {
+            fs$1.mkdirSync(folder, { recursive: true });
         }
-        //@ts-ignore
-        async onWillAppear(ev) {
-            let action = ev.payload.settings.action;
-            let serverID = ev.payload.settings.serverID;
-            let status = await this.apiManager.getServerStatus(serverID);
-            streamDeck.logger.info(`Server status for ${serverID}: ${status}`);
-            //@ts-ignore
-            // await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(instertStatusIndicator(getSVGFromFile(`imgs/actions/perform-power-action/key-${action}.svg`), status))}`);
-            await ev.action.setImage(`data:image/svg+xml,${encodeURIComponent(getSVGFromFile(`imgs/actions/perform-power-action/key-${action}.svg`))}`);
-            await ev.action.setTitle(await this.apiManager.getServerNameFromID(serverID));
-        }
-    });
-    return _classThis;
-})();
+        streamDeck.logger.info("Folder exists or created:", folder);
+        players.forEach((username) => {
+            const outputFile = require$$1$2.join(folder, `${username}.png`);
+            // Check if file already exists
+            if (fs$1.existsSync(outputFile)) {
+                streamDeck.logger.info(`File for ${username} already exists, skipping download.`);
+                return;
+            }
+            const url = `https://api.mcheads.org/avatar/${username}/${size}`;
+            https
+                .get(url, (res) => {
+                if (res.statusCode !== 200) {
+                    streamDeck.logger.error(`Failed to download ${username}:`, res.statusCode);
+                    return;
+                }
+                const fileStream = fs$1.createWriteStream(outputFile);
+                res.pipe(fileStream);
+                fileStream.on("finish", () => {
+                    fileStream.close();
+                    streamDeck.logger.info(`Downloaded ${username}'s head to ${outputFile}`);
+                });
+            })
+                .on("error", (err) => {
+                streamDeck.logger.error(`Request error for ${username}:`, err);
+            });
+        });
+    }
+}
 
+let apiManager = new PterodactylApiManager();
+let externalApiManager = new ExternalApiManager();
 // We can enable "trace" logging so that all messages between the Stream Deck, and the plugin are recorded. When storing sensitive information
 streamDeck.logger.setLevel(LogLevel.TRACE);
 // Register the increment action.
 streamDeck.actions.registerAction(new PerformPowerAction());
+streamDeck.actions.registerAction(new ShowOnlinePlayers());
 // Finally, connect to the Stream Deck.
 streamDeck.connect();
+
+export { apiManager, externalApiManager };
 //# sourceMappingURL=plugin.js.map

@@ -7,12 +7,25 @@
       "Name": "Perform Power Action",
       "UUID": "net.phimai.pterodactyl.perform-power-action",
       "Icon": "imgs/actions/perform-power-action/key-stop",
-      "Tooltip": "Example of populating a dropdown from the plugin.",
+      "Tooltip": "",
       "PropertyInspectorPath": "ui/open-product-page.html",
       "Controllers": ["Keypad"],
       "States": [
         {
           "Image": "imgs/actions/open-product-page/key",
+          "TitleAlignment": "middle"
+        }
+      ]
+    },
+    {
+      "Name": "[MC] Show Online Players",
+      "UUID": "net.phimai.pterodactyl.show-online-players",
+      "Icon": "imgs/actions/show-online-players/icon",
+      "Tooltip": "",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/show-online-players/key",
           "TitleAlignment": "middle"
         }
       ]
