@@ -3,3 +3,5 @@
 
 /net.phimai.pterodactyl.sdPlugin/logs
 /net.phimai.pterodactyl.sdPlugin/bin
+net.phimai.pterodactyl.sdPlugin/logs/*
+net.phimai.pterodactyl.sdPlugin/bin/*
